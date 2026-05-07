@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Get AI-powered shipment recommendations using fuzzy logic matching for optimal cargo space utilization.">
+    <title>Smart Matching — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/discover">Discover</a></li>
+                <li><a href="/recommend" class="active">Smart Match</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>🤖 Smart <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Matching</span>
+            </h1>
+            <p>AI-powered recommendations using fuzzy logic for optimal cargo matching</p>
+        </div>
+
+        <div class="page-content">
+            <!-- Input Form -->
+            <div class="filter-panel" id="matchForm">
+                <h3>🎯 Tell Us What You Need</h3>
+                <div class="form-row">
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Source City *</label>
+                        <input type="text" class="form-input" id="matchSource" placeholder="e.g. Mumbai" required>
+                        <div class="autocomplete-list" id="matchSourceAuto"></div>
+                    </div>
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Destination City *</label>
+                        <input type="text" class="form-input" id="matchDest" placeholder="e.g. London" required>
+                        <div class="autocomplete-list" id="matchDestAuto"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cargo Weight (kg) *</label>
+                        <input type="number" class="form-input" id="matchWeight" placeholder="e.g. 500" min="1"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Transport Mode</label>
+                        <select class="form-select" id="matchMode">
+                            <option value="">Any Mode</option>
+                            <option value="Air">✈️ Air</option>
+                            <option value="Sea">🚢 Sea</option>
+                            <option value="Road">🚛 Road</option>
+                            <option value="Rail">🚂 Rail</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Urgency Level</label>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                            <input type="range" id="matchUrgency" min="0" max="100" value="50"
+                                style="flex: 1; accent-color: var(--accent-400);"
+                                oninput="document.getElementById('urgencyLabel').textContent = getUrgencyLabel(this.value)">
+                            <span id="urgencyLabel"
+                                style="font-size: 0.85rem; color: var(--accent-400); min-width: 60px;">Medium</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <button class="btn btn-primary btn-lg" onclick="getRecommendations()" id="matchBtn">
+                        🤖 Get Recommendations
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fuzzy Logic Explainer -->
+            <div class="card" style="margin-bottom: 2rem; border-left: 3px solid var(--accent-400);"
+                id="fuzzyExplainer">
+                <h3 style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+                    🧠 How Fuzzy Matching Works
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7;">
+                    Our recommendation engine uses <strong style="color: var(--text-primary);">Fuzzy Logic</strong>
+                    (scikit-fuzzy) to evaluate shipments.
+                    Three input factors are analyzed — <em>Capacity Fit</em> (how well available space matches your
+                    cargo),
+                    <em>Cost Efficiency</em> (relative pricing), and <em>Urgency</em> (timeline match).
+                    The engine applies human-readable rules (e.g., "good capacity + cheap = excellent match")
+                    to produce an explainable score from 0 to 100.
+                </p>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading-spinner" id="matchLoading" style="display: none;">
+                <div class="spinner"></div>
+                <span style="color: var(--text-muted);">Running fuzzy logic engine...</span>
+            </div>
+
+            <!-- Results Info -->
+            <div id="matchResultsInfo" style="display: none; margin-bottom: 1.5rem;"></div>
+
+            <!-- Results Grid -->
+            <div class="results-grid" id="matchResults"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAutocomplete('matchSource', 'matchSourceAuto');
+            setupAutocomplete('matchDest', 'matchDestAuto');
+        });
+
+        function getUrgencyLabel(val) {
+            if (val >= 80) return 'Very High';
+            if (val >= 60) return 'High';
+            if (val >= 40) return 'Medium';
+            if (val >= 20) return 'Low';
+            return 'Very Low';
+        }
+
+        async function getRecommendations() {
+            const source = document.getElementById('matchSource').value.trim();
+            const dest = document.getElementById('matchDest').value.trim();
+            const weight = parseFloat(document.getElementById('matchWeight').value);
+            const mode = document.getElementById('matchMode').value;
+            const urgency = parseInt(document.getElementById('matchUrgency').value);
+
+            if (!source || !dest || !weight) {
+                showToast('Please fill in source, destination, and weight', 'warning');
+                return;
+            }
+
+            // Show loading
+            const btn = document.getElementById('matchBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analyzing...';
+            document.getElementById('matchLoading').style.display = 'flex';
+            document.getElementById('matchResults').innerHTML = '';
+            document.getElementById('matchResultsInfo').style.display = 'none';
+
+            try {
+                const data = await apiRequest('/recommend', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        source,
+                        destination: dest,
+                        weight_kg: weight,
+                        transport_mode: mode,
+                        urgency,
+                    }),
+                });
+
+                document.getElementById('matchLoading').style.display = 'none';
+
+                if (!data.recommendations || data.recommendations.length === 0) {
+                    document.getElementById('matchResults').innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-icon">🔍</div>
+                            <h3>No Matches Found</h3>
+                            <p>${data.message || 'Try different cities, modes, or weight values.'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Show results info
+                const info = document.getElementById('matchResultsInfo');
+                info.style.display = 'block';
+                info.innerHTML = `
+                    <div class="card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <strong style="font-size: 1.1rem;">🎯 ${data.recommendations.length} Recommendations</strong>
+                            <span style="color: var(--text-muted);"> from ${data.total_candidates} candidates</span>
+                            ${data.nearby_city_search ? '<span class="mode-badge mode-sea" style="margin-left: 0.5rem;">Includes nearby cities</span>' : ''}
+                        </div>
+                        <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            <span>📍 ${data.request.source} → ${data.request.destination}</span>
+                            <span>📦 ${data.request.weight_kg} kg</span>
+                            <span>🚀 ${data.request.transport_mode}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Render results
+                const grid = document.getElementById('matchResults');
+                grid.innerHTML = data.recommendations.map(s => createShipmentCard(s, true, true)).join('');
+
+            } catch (err) {
+                document.getElementById('matchLoading').style.display = 'none';
+                showToast('Recommendation failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🤖 Get Recommendations';
+            }
+        }
+
+        function refreshResults() {
+            getRecommendations();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track your cargo shipments in real-time with interactive 2D map visualization.">
+    <title>Shipment Tracking — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/smart-discover">Smart Discover</a></li>
+                <li><a href="/tracking" class="active">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>📡 Shipment <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Tracking</span>
+            </h1>
+            <p>Visualize your cargo's journey on an interactive map</p>
+        </div>
+
+        <div class="page-content">
+            <!-- Search -->
+            <div class="filter-panel">
+                <h3>🔍 Track a Shipment</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Shipment ID (numeric)</label>
+                        <input type="number" class="form-input" id="trackingId" placeholder="e.g. 1" min="1">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="trackShipment()" style="width: 100%;">
+                            📡 Track Shipment
+                        </button>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-secondary" onclick="trackRandom()" style="width: 100%;">
+                            🎲 Random Shipment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="map-container" id="trackingMap" style="margin-bottom: 2rem;"></div>
+
+            <!-- Tracking Details -->
+            <div class="tracking-info" id="trackingDetails" style="display: none;">
+                <div class="tracking-detail-card">
+                    <h3>📋 Shipment Information</h3>
+                    <div id="shipmentInfo"></div>
+                </div>
+                <div class="tracking-detail-card">
+                    <h3>📍 Route Progress</h3>
+                    <div id="routeProgress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@india-boundary-corrector/leaflet-layer/dist/index.global.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script>
+        let map;
+        let routeLayer;
+        let trackingInterval = null;
+        let activeTrackingId = null;
+        let completionNotified = false;
+
+        function addTrackingBaseLayer() {
+            const tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            const tileOptions = {
+                attribution: '© OpenStreetMap contributors, © CARTO',
+                maxZoom: 19,
+            };
+
+            try {
+                if (window.IndiaBoundaryCorrector && typeof window.IndiaBoundaryCorrector.extendLeaflet === 'function') {
+                    window.IndiaBoundaryCorrector.extendLeaflet(L);
+                }
+
+                if (L.tileLayer && typeof L.tileLayer.indiaBoundaryCorrected === 'function') {
+                    L.tileLayer.indiaBoundaryCorrected(tileUrl, tileOptions).addTo(map);
+                    return;
+                }
+            } catch (err) {
+                console.warn('India boundary corrected layer unavailable, using default basemap.', err);
+            }
+
+            L.tileLayer(tileUrl, tileOptions).addTo(map);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize map
+            map = L.map('trackingMap', {
+                center: [20, 0],
+                zoom: 2,
+                maxZoom: 12,
+                minZoom: 2,
+            });
+
+            addTrackingBaseLayer();
+
+            routeLayer = L.layerGroup().addTo(map);
+
+            // Check URL for shipment ID
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (id) {
+                document.getElementById('trackingId').value = id;
+                trackShipment();
+            }
+
+            document.getElementById('trackingId').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') trackShipment();
+            });
+
+            window.addEventListener('beforeunload', stopTrackingLoop);
+        });
+
+        function stopTrackingLoop() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+        }
+
+        function startTrackingLoop(shipmentId) {
+            stopTrackingLoop();
+            trackingInterval = setInterval(() => {
+                fetchAndRenderTracking(shipmentId, false);
+            }, 500);
+        }
+
+        function trackRandom() {
+            const randomId = Math.floor(Math.random() * 9999) + 1;
+            document.getElementById('trackingId').value = randomId;
+            trackShipment();
+        }
+
+        async function trackShipment() {
+            const id = document.getElementById('trackingId').value;
+            if (!id) {
+                showToast('Please enter a shipment ID', 'warning');
+                return;
+            }
+
+            activeTrackingId = id;
+            completionNotified = false;
+            await fetchAndRenderTracking(id, true);
+            startTrackingLoop(id);
+        }
+
+        async function fetchAndRenderTracking(id, showInitialToast = false) {
+
+            try {
+                const data = await apiRequest(`/tracking/${id}`);
+
+                // Clear existing markers
+                routeLayer.clearLayers();
+
+                const srcLatLng = [data.source.lat, data.source.lon];
+                const dstLatLng = [data.destination.lat, data.destination.lon];
+                const curLatLng = [data.current_position.lat, data.current_position.lon];
+
+                // Color based on transport mode
+                const modeColors = {
+                    'Air': '#60a5fa',
+                    'Sea': '#22d3ee',
+                    'Road': '#fbbf24',
+                    'Rail': '#c084fc'
+                };
+                const color = modeColors[data.transport_mode] || '#4de2bd';
+
+                // Source marker
+                const srcIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background: #10b981; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(16,185,129,0.5);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                });
+                L.marker(srcLatLng, { icon: srcIcon })
+                    .bindPopup(`<strong>📍 Origin</strong><br>${data.source.city}`)
+                    .addTo(routeLayer);
+
+                // Destination marker
+                const dstIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(239,68,68,0.5);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                });
+                L.marker(dstLatLng, { icon: dstIcon })
+                    .bindPopup(`<strong>🏁 Destination</strong><br>${data.destination.city}`)
+                    .addTo(routeLayer);
+
+                // Current position marker
+                const curIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px ${color}; animation: pulse 2s infinite;"></div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12],
+                });
+                L.marker(curLatLng, { icon: curIcon })
+                    .bindPopup(`<strong>${getModeIcon(data.transport_mode)} Current Position</strong><br>Progress: ${data.progress_pct}%`)
+                    .addTo(routeLayer);
+
+                // Route line (curved approximation)
+                const routeLine = L.polyline([srcLatLng, dstLatLng], {
+                    color: color,
+                    weight: 3,
+                    opacity: 0.6,
+                    dashArray: '10, 8',
+                }).addTo(routeLayer);
+
+                // Traveled portion
+                L.polyline([srcLatLng, curLatLng], {
+                    color: color,
+                    weight: 4,
+                    opacity: 1,
+                }).addTo(routeLayer);
+
+                // Fit bounds
+                map.fitBounds(L.latLngBounds(srcLatLng, dstLatLng).pad(0.3), {
+                    animate: true,
+                    duration: 1,
+                });
+
+                // Update details
+                document.getElementById('trackingDetails').style.display = 'grid';
+
+                document.getElementById('shipmentInfo').innerHTML = `
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Shipment ID</span>
+                            <span style="font-weight: 600;">${data.shipment_id}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Transport Mode</span>
+                            <span class="mode-badge ${getModeClass(data.transport_mode)}">${getModeIcon(data.transport_mode)} ${data.transport_mode}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Route</span>
+                            <span>${data.source.city} → ${data.destination.city}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Distance</span>
+                            <span>${data.distance_km.toLocaleString()} km</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Status</span>
+                            <span style="color: var(--accent-400); font-weight: 600;">${data.status}</span>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('routeProgress').innerHTML = `
+                    <div class="tracking-progress">
+                        <span class="progress-label">${data.source.city}</span>
+                        <div class="progress-bar" style="flex: 1;">
+                            <div class="progress-fill" style="width: ${data.progress_pct}%; background: ${color};"></div>
+                        </div>
+                        <span class="progress-label">${data.destination.city}</span>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <span class="progress-value" style="font-size: 2rem;">${data.progress_pct}%</span>
+                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                            ~${Math.round(data.distance_km * data.progress_pct / 100).toLocaleString()} km traveled
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                        Current coords: ${data.current_position.lat}°, ${data.current_position.lon}°
+                    </div>
+                `;
+
+                if (showInitialToast) {
+                    showToast(`Tracking ${data.shipment_id} started`, 'info');
+                }
+
+                if (data.just_completed && !completionNotified) {
+                    completionNotified = true;
+                    showToast(`✅ Shipment ${data.shipment_id} reached destination`, 'success');
+                }
+
+                if (data.progress_pct >= 100) {
+                    stopTrackingLoop();
+                }
+
+            } catch (err) {
+                stopTrackingLoop();
+                showToast('Tracking failed: ' + err.message, 'error');
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px currentColor;
+            }
+
+            50% {
+                box-shadow: 0 0 25px currentColor;
+            }
+        }
+    </style>
+</body>
+
+</html>

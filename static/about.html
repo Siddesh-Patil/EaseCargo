@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="About EaseCargo — architecture, tech stack, API documentation, and design rationale for the Smart Container Space Matching Platform.">
+    <title>About — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/smart-discover">Smart Discover</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about" class="active">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>📖 About <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">EaseCargo</span>
+            </h1>
+            <p>Architecture, technology decisions, and design rationale</p>
+        </div>
+
+        <div class="page-content about-content">
+            <!-- Overview -->
+            <div class="about-section">
+                <h2>🎯 Project Overview</h2>
+                <p>
+                    <strong>EaseCargo</strong> is a Smart Container Space Matching Platform designed to connect small
+                    and medium
+                    exporters with unused capacity in partially-filled cargo shipments. The platform emphasizes
+                    route-based
+                    shipment discovery, cost efficiency, transparency, sustainability, and visual intelligence through
+                    interactive maps.
+                </p>
+                <p style="margin-top: 1rem;">
+                    This is an academic + real-world scalable prototype that demonstrates engineering maturity
+                    while remaining 100% cost-free using only open-source tools and free services.
+                </p>
+            </div>
+
+            <!-- Architecture -->
+            <div class="about-section" id="architecture">
+                <h2>🏗️ System Architecture</h2>
+                <div class="card"
+                    style="padding: 2rem; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.85rem; line-height: 2;">
+                    <pre style="color: var(--text-secondary); overflow-x: auto; white-space: pre;">
+┌──────────────────────────────────────────────────────────┐
+│                    FRONTEND (Browser)                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
+│  │ Landing  │ │ Discover │ │  Smart   │ │  Tracking   │ │
+│  │  Page    │ │  Page    │ │ Matching │ │  (Leaflet)  │ │
+│  └──────────┘ └──────────┘ └──────────┘ └─────────────┘ │
+│  ┌──────────┐ ┌──────────┐                              │
+│  │Dashboard │ │  About   │                              │
+│  └──────────┘ └──────────┘                              │
+│                      ▲  REST API  ▲                      │
+└──────────────────────┼────────────┼──────────────────────┘
+                       │            │
+┌──────────────────────┼────────────┼──────────────────────┐
+│                  BACKEND (Flask/Python)                    │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐  │
+│  │   Routes     │ │    Fuzzy     │ │     Models       │  │
+│  │  (REST API)  │ │   Engine     │ │  (SQLAlchemy)    │  │
+│  └──────────────┘ └──────────────┘ └──────────────────┘  │
+│                           │                               │
+│  ┌────────────────────────┼────────────────────────────┐  │
+│  │              SQLite Database                        │  │
+│  │    Users │ Shipments │ Bookings                     │  │
+│  └─────────────────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │         Data Layer (CSV + JSON coords)              │  │
+│  └─────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+            </div>
+
+            <!-- Tech Stack -->
+            <div class="about-section">
+                <h2>💻 Technology Stack</h2>
+                <div class="tech-stack-grid">
+                    <div class="tech-item">
+                        <div class="tech-name">🐍 Flask</div>
+                        <div class="tech-desc">Python web framework</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">🗄️ SQLite + SQLAlchemy</div>
+                        <div class="tech-desc">Database & ORM</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">🤖 scikit-fuzzy</div>
+                        <div class="tech-desc">Fuzzy logic engine</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">🗺️ Leaflet</div>
+                        <div class="tech-desc">2D map tracking</div>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-name">📊 NumPy / Pandas</div>
+                        <div class="tech-desc">Data processing</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuzzy Logic -->
+            <div class="about-section">
+                <h2>🧠 Fuzzy Logic Matching</h2>
+                <p>
+                    The recommendation engine uses <strong>scikit-fuzzy</strong> (skfuzzy) to compute match scores.
+                    Unlike black-box ML models, fuzzy logic provides fully explainable results based on human-readable
+                    rules.
+                </p>
+                <div class="card" style="margin-top: 1rem; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Input Variables</h3>
+                    <ul>
+                        <li><strong>Capacity Fit (0-100):</strong> How well the shipment's remaining capacity matches
+                            the user's cargo weight. Higher = better fit.</li>
+                        <li><strong>Cost Efficiency (0-100):</strong> Relative cost ranking among matched shipments.
+                            Higher = cheaper.</li>
+                        <li><strong>Urgency (0-100):</strong> How urgent the shipping timeline is. Higher = more urgent.
+                        </li>
+                    </ul>
+                </div>
+                <div class="card" style="margin-top: 1rem; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">Example Rules</h3>
+                    <ul>
+                        <li>"If capacity fit is <strong>good</strong> AND cost is <strong>cheap</strong>, THEN match is
+                            <strong>excellent</strong>"</li>
+                        <li>"If capacity fit is <strong>average</strong> AND cost is <strong>moderate</strong>, THEN
+                            match is <strong>average</strong>"</li>
+                        <li>"If urgency is <strong>high</strong> AND capacity fit is <strong>good</strong>, THEN match
+                            is <strong>excellent</strong>"</li>
+                    </ul>
+                    <p style="margin-top: 1rem;">
+                        Each variable has triangular membership functions (poor/average/good) that determine
+                        the degree of membership. The fuzzy inference engine applies all rules and
+                        defuzzifies the output to produce a crisp score from 0 to 100.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Map Design -->
+            <div class="about-section">
+                <h2>🗺️ Map Design</h2>
+                <p>
+                    The platform provides a focused map visualization layer for shipment tracking:
+                </p>
+                <div class="card" style="margin-top: 1rem; padding: 1.5rem;">
+                    <h3>2D Tracking (Leaflet + OpenStreetMap)</h3>
+                    <ul>
+                        <li>Used for individual shipment tracking</li>
+                        <li>Simulated progress with interpolated positions</li>
+                        <li>Transport-mode colored route lines</li>
+                        <li>Lightweight, fast loading</li>
+                        <li>Dark CARTO basemap for aesthetic consistency</li>
+                    </ul>
+                </div>
+                <div class="card" style="margin-top: 1rem; padding: 1.5rem;">
+                    <h3>Future Scope</h3>
+                    <p>
+                        A 3D globe experience may be reintroduced in a future phase once product scope requires
+                        global route storytelling beyond operational tracking.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Data Model -->
+            <div class="about-section">
+                <h2>📐 Data Model</h2>
+                <p>
+                    The platform uses a clear separation between shipment data and geographic data:
+                </p>
+                <div class="card" style="margin-top: 1rem; padding: 1.5rem;">
+                    <h3>Key Design Decisions</h3>
+                    <ul>
+                        <li><strong>Coordinates are NOT stored per shipment</strong> — a separate city_coordinates.json
+                            provides approximate centroids for 50 cities</li>
+                        <li><strong>10,000 synthetic shipments</strong> generated from CSV with realistic distributions
+                        </li>
+                        <li><strong>Three database tables:</strong> Users, Shipments, Bookings (via SQLAlchemy)</li>
+                        <li><strong>Capacity reduction on booking:</strong> The booking endpoint reduces
+                            remaining_capacity_kg and returns total cost</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- API Documentation -->
+            <div class="about-section" id="api">
+                <h2>📡 API Documentation</h2>
+                <div class="card"
+                    style="margin-top: 1rem; padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong> <code>/api/cities</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">List all
+                            cities with coordinates</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong>
+                        <code>/api/cities/nearby?city=Mumbai&radius=500</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Find
+                            nearby cities within radius</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong>
+                        <code>/api/shipments?source=Mumbai&destination=London&mode=Sea&page=1</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Search
+                            and filter shipments (paginated)</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong> <code>/api/shipments/stats</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Aggregate
+                            statistics and top routes</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: #fbbf24;">POST</strong> <code>/api/recommend</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Get fuzzy
+                            logic recommendations. Body: {source, destination, weight_kg, transport_mode?, urgency?}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: #fbbf24;">POST</strong> <code>/api/bookings</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Create a
+                            booking. Body: {shipment_id, weight_kg}. GET returns 405 by design.</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong> <code>/api/bookings</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">List all
+                            bookings</div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong style="color: var(--accent-400);">GET</strong> <code>/api/tracking/{id}</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">Simulated
+                            tracking with coordinates and progress</div>
+                    </div>
+                    <div>
+                        <strong style="color: var(--accent-400);">GET</strong> <code>/api/sustainability</code>
+                        <div style="color: var(--text-muted); margin-top: 4px; font-family: var(--font-sans);">
+                            Environmental impact metrics</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Flow -->
+            <div class="about-section">
+                <h2>🔄 Data Flow</h2>
+                <div class="card"
+                    style="padding: 2rem; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
+                    <pre style="color: var(--text-secondary); overflow-x: auto; white-space: pre;">
+ CSV (10,000 rows)      city_coordinates.json
+       │                        │
+       ▼                        ▼
+ ┌─────────────┐         ┌──────────────┐
+ │  generate   │         │  Coordinate  │
+ │  _shipments │         │  Lookup      │
+ └──────┬──────┘         └──────┬───────┘
+        │                       │
+        ▼                       │
+ ┌──────────────┐               │
+ │   SQLite DB  │◄──────────────┘
+ │  (Seeded on  │     (Used by tracking
+ │  first run)  │      & map endpoints)
+ └──────┬───────┘
+        │
+        ▼
+ ┌──────────────┐    ┌───────────────┐
+ │  REST API    │───▶│  Fuzzy Engine  │
+ │  (Flask)     │    │  (skfuzzy)    │
+ └──────┬───────┘    └───────────────┘
+        │
+        ▼
+ ┌──────────────┐
+ │   Frontend   │
+ │  (HTML/JS)   │
+ └──────────────┘
+</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="/static/js/common.js"></script>
+</body>
+
+</html>

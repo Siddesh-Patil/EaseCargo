@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="EaseCargo analytics dashboard with shipment statistics, sustainability metrics, and booking history.">
+    <title>Dashboard — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/smart-discover">Smart Discover</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard" class="active">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>📊 Analytics <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dashboard</span>
+            </h1>
+            <p>Real-time insights into platform performance and sustainability impact</p>
+        </div>
+
+        <div class="page-content">
+            <!-- Main Stats -->
+            <div class="stats-grid" id="mainStats">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-number" id="totalShipments">—</div>
+                    <div class="stat-title">Total Shipments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="availableShipments">—</div>
+                    <div class="stat-title">Available Now</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-number" id="totalBookings">—</div>
+                    <div class="stat-title">Bookings Made</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🌐</div>
+                    <div class="stat-number" id="totalCities">—</div>
+                    <div class="stat-title">Connected Cities</div>
+                </div>
+            </div>
+
+            <!-- Transport Mode Stats -->
+            <div class="section-header" style="margin-top: 2rem;">
+                <div class="section-tag">✦ Transport Modes</div>
+                <h2>Shipments by Mode</h2>
+            </div>
+
+            <div class="stats-grid" id="modeStats">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Sustainability -->
+            <div class="section-header" style="margin-top: 2rem;">
+                <div class="section-tag">✦ Sustainability Impact</div>
+                <h2>Environmental Metrics</h2>
+                <p>Every shared container is a step towards greener logistics</p>
+            </div>
+
+            <div class="sustainability-grid" id="sustainabilityStats">
+                <div class="eco-card">
+                    <div class="eco-icon">🌱</div>
+                    <div class="eco-value" id="co2Saved">—</div>
+                    <div class="eco-label">kg CO₂ Saved</div>
+                </div>
+                <div class="eco-card">
+                    <div class="eco-icon">🚛</div>
+                    <div class="eco-value" id="trucksAvoided">—</div>
+                    <div class="eco-label">Trucks Avoided</div>
+                </div>
+                <div class="eco-card">
+                    <div class="eco-icon">🌳</div>
+                    <div class="eco-value" id="treesEquiv">—</div>
+                    <div class="eco-label">Trees Equivalent / Year</div>
+                </div>
+                <div class="eco-card">
+                    <div class="eco-icon">📦</div>
+                    <div class="eco-value" id="weightShared">—</div>
+                    <div class="eco-label">kg Cargo Shared</div>
+                </div>
+            </div>
+
+            <!-- Top Routes -->
+            <div class="section-header" style="margin-top: 2rem;">
+                <div class="section-tag">✦ Popular Routes</div>
+                <h2>Top Trade Corridors</h2>
+            </div>
+
+            <div id="topRoutes" class="results-grid"
+                style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="section-header" style="margin-top: 2rem;">
+                <div class="section-tag">✦ Recent Activity</div>
+                <h2>Latest Bookings</h2>
+            </div>
+
+            <div id="recentBookings">
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <p>No bookings yet. <a href="/smart-discover">Smart Discover shipments</a> to make your first booking!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+
+        async function loadDashboard() {
+            try {
+                // Load all data in parallel
+                const [stats, cities, sustainability, bookings] = await Promise.all([
+                    apiRequest('/shipments/stats'),
+                    apiRequest('/cities'),
+                    apiRequest('/sustainability'),
+                    apiRequest('/bookings'),
+                ]);
+
+                // Main stats
+                document.getElementById('totalShipments').textContent = (stats.total_shipments || 0).toLocaleString();
+                document.getElementById('availableShipments').textContent = (stats.available_shipments || 0).toLocaleString();
+                document.getElementById('totalBookings').textContent = (sustainability.total_bookings || 0).toLocaleString();
+                document.getElementById('totalCities').textContent = (cities.count || 0).toLocaleString();
+
+                // Mode stats
+                const modeContainer = document.getElementById('modeStats');
+                const modeEmoji = { Air: '✈️', Sea: '🚢', Road: '🚛', Rail: '🚂' };
+                const modeData = stats.by_transport_mode || {};
+                modeContainer.innerHTML = Object.entries(modeData).map(([mode, data]) => `
+                    <div class="stat-card">
+                        <div class="stat-icon">${modeEmoji[mode] || '📦'}</div>
+                        <div class="stat-number">${data.count.toLocaleString()}</div>
+                        <div class="stat-title">${mode} Shipments</div>
+                        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);">
+                            Avg: $${data.avg_cost_per_kg}/kg
+                        </div>
+                    </div>
+                `).join('');
+
+                // Sustainability
+                document.getElementById('co2Saved').textContent = (sustainability.co2_saved_kg || 0).toLocaleString();
+                document.getElementById('trucksAvoided').textContent = (sustainability.trucks_avoided || 0).toLocaleString();
+                document.getElementById('treesEquiv').textContent = (sustainability.trees_equivalent || 0).toLocaleString();
+                document.getElementById('weightShared').textContent = (sustainability.total_weight_shared_kg || 0).toLocaleString();
+
+                // Top routes
+                const routesContainer = document.getElementById('topRoutes');
+                const topRoutes = stats.top_routes || [];
+                if (topRoutes.length > 0) {
+                    routesContainer.innerHTML = topRoutes.map((r, i) => `
+                        <div class="card" style="padding: 1.2rem;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="
+                                    width: 36px; height: 36px; border-radius: var(--radius-sm);
+                                    background: var(--gradient-primary); display: flex;
+                                    align-items: center; justify-content: center;
+                                    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+                                ">#${i + 1}</div>
+                                <div>
+                                    <div style="font-weight: 600; font-size: 0.95rem;">${r.source} → ${r.destination}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">${r.count} shipments</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Recent bookings
+                const bookingContainer = document.getElementById('recentBookings');
+                const bookingList = bookings.bookings || [];
+                if (bookingList.length > 0) {
+                    bookingContainer.innerHTML = `
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Ref</th>
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Shipment ID</th>
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Weight</th>
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Cost</th>
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Status</th>
+                                        <th style="text-align: left; padding: 12px; color: var(--text-muted); font-size: 0.85rem;">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${bookingList.slice(0, 10).map(b => `
+                                        <tr style="border-bottom: 1px solid var(--border-subtle);">
+                                            <td style="padding: 12px; font-family: var(--font-mono); font-size: 0.85rem;">${b.booking_ref}</td>
+                                            <td style="padding: 12px; font-family: var(--font-mono); font-size: 0.85rem;">${b.shipment_ref || ('#' + b.shipment_id)}</td>
+                                            <td style="padding: 12px;">${b.weight_kg.toLocaleString()} kg</td>
+                                            <td style="padding: 12px; color: var(--accent-400); font-weight: 600;">${formatCost(b.total_cost)}</td>
+                                            <td style="padding: 12px;"><span class="mode-badge mode-sea">${b.status}</span></td>
+                                            <td style="padding: 12px; font-size: 0.85rem; color: var(--text-muted);">${new Date(b.booked_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                showToast('Failed to load dashboard: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

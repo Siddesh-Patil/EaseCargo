@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Discover and filter available cargo shipments from our global network of 10,000+ routes.">
+    <title>Discover Shipments — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/discover" class="active">Discover</a></li>
+                <li><a href="/recommend">Smart Match</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>🔍 Discover <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Shipments</span>
+            </h1>
+            <p>Browse and filter from our network of available cargo shipments worldwide</p>
+        </div>
+
+        <div class="page-content">
+            <!-- Filter Panel -->
+            <div class="filter-panel" id="filterPanel">
+                <h3>🎯 Filter Shipments</h3>
+                <div class="form-row">
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Source City</label>
+                        <input type="text" class="form-input" id="filterSource" placeholder="e.g. Mumbai">
+                        <div class="autocomplete-list" id="sourceAutocomplete"></div>
+                    </div>
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Destination City</label>
+                        <input type="text" class="form-input" id="filterDest" placeholder="e.g. London">
+                        <div class="autocomplete-list" id="destAutocomplete"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Transport Mode</label>
+                        <select class="form-select" id="filterMode">
+                            <option value="">All Modes</option>
+                            <option value="Air">✈️ Air</option>
+                            <option value="Sea">🚢 Sea</option>
+                            <option value="Road">🚛 Road</option>
+                            <option value="Rail">🚂 Rail</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Min Capacity (kg)</label>
+                        <input type="number" class="form-input" id="filterMinCap" placeholder="e.g. 100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Cost ($/kg)</label>
+                        <input type="number" class="form-input" id="filterMaxCost" placeholder="e.g. 5.00" step="0.1">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" id="searchBtn" onclick="searchShipments()" style="width: 100%;">
+                            🔍 Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Header -->
+            <div class="results-header" id="resultsHeader" style="display: none;">
+                <div class="results-count" id="resultsCount"></div>
+                <div>
+                    <button class="btn btn-ghost btn-sm" onclick="searchShipments()">↻ Refresh</button>
+                </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div id="suggestions" style="display: none; margin-bottom: 1.5rem;"></div>
+
+            <!-- Loading -->
+            <div class="loading-spinner" id="loadingState" style="display: none;">
+                <div class="spinner"></div>
+                <span style="color: var(--text-muted);">Searching shipments...</span>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="results-grid" id="resultsGrid"></div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">🔍</div>
+                <h3>Search for Shipments</h3>
+                <p>Use the filters above to discover available cargo space on global routes.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+        const perPage = 12;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAutocomplete('filterSource', 'sourceAutocomplete');
+            setupAutocomplete('filterDest', 'destAutocomplete');
+
+            // Enter key triggers search
+            document.querySelectorAll('.form-input, .form-select').forEach(el => {
+                el.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') searchShipments();
+                });
+            });
+
+            // Auto-load initial results
+            searchShipments();
+        });
+
+        async function searchShipments(page = 1) {
+            currentPage = page;
+            const source = document.getElementById('filterSource').value.trim();
+            const dest = document.getElementById('filterDest').value.trim();
+            const mode = document.getElementById('filterMode').value;
+            const minCap = document.getElementById('filterMinCap').value;
+            const maxCost = document.getElementById('filterMaxCost').value;
+
+            // Show loading
+            document.getElementById('loadingState').style.display = 'flex';
+            document.getElementById('resultsGrid').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('pagination').style.display = 'none';
+
+            let params = new URLSearchParams({ page, per_page: perPage });
+            if (source) params.append('source', source);
+            if (dest) params.append('destination', dest);
+            if (mode) params.append('mode', mode);
+            if (minCap) params.append('min_capacity', minCap);
+            if (maxCost) params.append('max_cost', maxCost);
+
+            try {
+                const data = await apiRequest(`/shipments?${params.toString()}`);
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (data.shipments.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('emptyState').innerHTML = `
+                        <div class="empty-icon">📭</div>
+                        <h3>No Shipments Found</h3>
+                        <p>Try adjusting your filters or search for nearby cities.</p>
+                    `;
+                    document.getElementById('resultsHeader').style.display = 'none';
+
+                    // Show suggestions if available
+                    if (data.suggestions) {
+                        showSuggestions(data.suggestions);
+                    }
+                    return;
+                }
+
+                // Update results header
+                document.getElementById('resultsHeader').style.display = 'flex';
+                document.getElementById('resultsCount').innerHTML = `
+                    Showing <strong>${data.shipments.length}</strong> of <strong>${data.total.toLocaleString()}</strong> shipments
+                    (Page ${data.page} of ${data.pages})
+                `;
+
+                // Render cards
+                const grid = document.getElementById('resultsGrid');
+                grid.innerHTML = data.shipments.map(s => createShipmentCard(s)).join('');
+
+                // Render pagination
+                renderPagination(data.page, data.pages);
+
+            } catch (err) {
+                document.getElementById('loadingState').style.display = 'none';
+                showToast('Failed to load shipments: ' + err.message, 'error');
+            }
+        }
+
+        function refreshResults() {
+            searchShipments(currentPage);
+        }
+
+        function showSuggestions(suggestions) {
+            const container = document.getElementById('suggestions');
+            let html = '<div class="card" style="padding: 1.5rem;">';
+            html += '<h3 style="margin-bottom: 0.5rem;">💡 Did you mean?</h3>';
+
+            if (suggestions.source_alternatives) {
+                html += '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Source cities:</p>';
+                html += '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">';
+                suggestions.source_alternatives.forEach(city => {
+                    html += `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('filterSource').value='${city}'; searchShipments();">${city}</button>`;
+                });
+                html += '</div>';
+            }
+
+            if (suggestions.destination_alternatives) {
+                html += '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Destination cities:</p>';
+                html += '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">';
+                suggestions.destination_alternatives.forEach(city => {
+                    html += `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('filterDest').value='${city}'; searchShipments();">${city}</button>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        function renderPagination(current, total) {
+            const container = document.getElementById('pagination');
+            if (total <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'flex';
+            let html = '';
+
+            html += `<button ${current <= 1 ? 'disabled' : ''} onclick="searchShipments(${current - 1})">← Prev</button>`;
+
+            const start = Math.max(1, current - 2);
+            const end = Math.min(total, current + 2);
+
+            if (start > 1) {
+                html += `<button onclick="searchShipments(1)">1</button>`;
+                if (start > 2) html += `<span class="page-info">...</span>`;
+            }
+
+            for (let i = start; i <= end; i++) {
+                html += `<button class="${i === current ? 'active' : ''}" onclick="searchShipments(${i})">${i}</button>`;
+            }
+
+            if (end < total) {
+                if (end < total - 1) html += `<span class="page-info">...</span>`;
+                html += `<button onclick="searchShipments(${total})">${total}</button>`;
+            }
+
+            html += `<button ${current >= total ? 'disabled' : ''} onclick="searchShipments(${current + 1})">Next →</button>`;
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>

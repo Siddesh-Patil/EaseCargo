@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="EaseCargo — Smart Container Space Matching Platform for small and medium exporters. Book unused cargo capacity efficiently.">
+    <title>EaseCargo — Smart Container Space Matching</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* ═══════ LANDING PAGE STYLES (BRIGHT) ═══════ */
+
+        /* ── Particle Canvas ── */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Gradient Text Animation ── */
+        .gradient-text-anim {
+            background: linear-gradient(135deg, #6366f1, #ec4899, #f43f5e, #f97316, #6366f1);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ── Floating badges ── */
+        .hero-float-badges {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 1.5s forwards;
+        }
+
+        .float-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 100px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .float-badge:hover {
+            background: white;
+            border-color: var(--primary-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px  rgba(0, 0, 0, 0.1);
+            color: black;
+        }
+
+        .float-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary-500);
+        }
+
+        /* ── Transport Mode Showcase ── */
+        .mode-showcase {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 3rem auto 0;
+        }
+
+        .mode-card {
+            text-align: center;
+            padding: 2rem 1rem;
+            border-radius: var(--radius-lg);
+            border: 1.5px solid transparent;
+            background: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: default;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+            color: #0f172a;
+        }
+
+        .mode-card:hover .mode-name {
+            color: #0f172a !important;
+        }
+
+        .mode-card:hover .mode-desc {
+            color: #334155 !important;
+        }
+
+        .mode-card .mode-emoji {
+            font-size: 2.8rem;
+            margin-bottom: 0.8rem;
+            display: block;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .mode-card:hover .mode-emoji {
+            transform: scale(1.15) rotate(-5deg);
+        }
+
+        .mode-card .mode-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            color: black;
+        }
+
+        .mode-card .mode-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .mode-card:nth-child(1) {
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .mode-card:nth-child(1):hover {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.04), white);
+
+        }
+
+        .mode-card:nth-child(2) {
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        .mode-card:nth-child(2):hover {
+            border-color: #06b6d4;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.04), white);
+        }
+
+        .mode-card:nth-child(3) {
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .mode-card:nth-child(3):hover {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), white);
+        }
+
+        .mode-card:nth-child(4) {
+            border-color: rgba(168, 85, 247, 0.2);
+        }
+
+        .mode-card:nth-child(4):hover {
+            border-color: #a855f7;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.04), white);
+        }
+
+        @media (max-width: 600px) {
+            .mode-showcase {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        /* ── Feature cards enhanced ── */
+        .feature-card-enhanced {
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            background: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            color: black;
+        }
+
+        .feature-card-enhanced::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(350px circle at var(--mx, 50%) var(--my, 50%),
+                    rgba(99, 102, 241, 0.06), transparent 60%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .feature-card-enhanced:hover::after {
+            opacity: 1;
+        }
+
+        .feature-card-enhanced:hover,
+        .feature-card-enhanced:focus-within {
+            transform: translateY(-5px);
+            border-color: var(--primary-200);
+            box-shadow: 0 14px 44px rgba(99, 102, 241, 0.1);
+        }
+
+        .feature-card-enhanced .fc-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, filter 0.3s ease;
+        }
+
+        .feature-card-enhanced:hover .fc-icon,
+        .feature-card-enhanced:focus-within .fc-icon {
+            transform: scale(1.12) rotate(-4deg);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+            filter: saturate(1.15);
+        }
+
+        .feature-card-enhanced h3 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 0.6rem;
+            color: #0f172a;
+            transition: color 0.25s ease;
+        }
+
+        .feature-card-enhanced p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.65;
+            transition: color 0.25s ease;
+        }
+
+        .feature-card-enhanced:hover h3,    
+        .feature-card-enhanced:focus-within h3 {
+            color: #4338ca;
+        }
+
+        .feature-card-enhanced:hover p,
+        .feature-card-enhanced:focus-within p {
+            color: #334155;
+        }
+
+        .feature-card-enhanced .fc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--primary-500);
+            text-decoration: none;
+            font-weight: 600;
+            transition: gap 0.3s, color 0.3s, transform 0.3s;
+        }
+
+        .feature-card-enhanced .fc-link:hover,
+        .feature-card-enhanced:focus-within .fc-link {
+            gap: 12px;
+            color: var(--primary-700);
+            transform: translateX(2px);
+        }
+
+        /* ── How It Works Timeline ── */
+        .hiw-timeline {
+            display: flex;
+            gap: 0;
+            max-width: 900px;
+            margin: 3rem auto 0;
+            position: relative;
+        }
+
+        .hiw-timeline::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 70px;
+            right: 70px;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+            opacity: 0.2;
+        }
+
+        .hiw-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 0 0.5rem;
+        }
+
+        .hiw-number {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.8rem;
+            margin: 0 auto 1.2rem;
+            position: relative;
+            z-index: 2;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .hiw-step:nth-child(1) .hiw-number {
+            background: linear-gradient(135deg, #eef2ff, white);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            color: #6366f1;
+        }
+
+        .hiw-step:nth-child(2) .hiw-number {
+            background: linear-gradient(135deg, #fdf2f8, white);
+            border: 2px solid rgba(236, 72, 153, 0.3);
+            color: #ec4899;
+        }
+
+        .hiw-step:nth-child(3) .hiw-number {
+            background: linear-gradient(135deg, #f0fdfa, white);
+            border: 2px solid rgba(20, 184, 166, 0.3);
+            color: #14b8a6;
+        }
+
+        .hiw-step:hover .hiw-number {
+            transform: scale(1.12) rotate(-3deg);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+        }
+
+        .hiw-step h3 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .hiw-step p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 600px) {
+            .hiw-timeline {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .hiw-timeline::before {
+                display: none;
+            }
+        }
+
+        /* ── Tech Orbit ── */
+        .tech-orbit {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 3rem auto 0;
+        }
+
+        .tech-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            z-index: 2;
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
+        }
+
+        .orbit-ring {
+            position: absolute;
+            inset: 0;
+            border: 2px dashed rgba(99, 102, 241, 0.12);
+            border-radius: 50%;
+            animation: orbitSpin 50s linear infinite;
+        }
+
+        @keyframes orbitSpin {
+            from {
+                transform: rotate(0);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .orbit-item {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 1.5px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            cursor: default;
+            transition: all 0.3s;
+            animation: orbitCounterSpin 50s linear infinite;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        @keyframes orbitCounterSpin {
+            from {
+                transform: rotate(0);
+            }
+
+            to {
+                transform: rotate(-360deg);
+            }
+        }
+
+        .orbit-item:hover {
+            transform: rotate(0deg) scale(1.25) !important;
+            background: var(--primary-50);
+            border-color: var(--primary-400);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+            animation-play-state: paused;
+        }
+
+        /* ── CTA Section ── */
+        .cta-section-enhanced {
+            position: relative;
+            padding: 6rem 2rem;
+            text-align: center;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .cta-card {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 3.5rem;
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(99, 102, 241, 0.12);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 40px rgba(99, 102, 241, 0.08);
+        }
+
+        .cta-card h2 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .cta-card p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 2rem;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-section-enhanced .cta-track-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            color: #ffffff;
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.28);
+        }
+
+        .cta-section-enhanced .cta-track-btn:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0891b2 100%);
+            color: #ffffff;
+            border-color: rgba(2, 132, 199, 0.5);
+            box-shadow: 0 12px 28px rgba(2, 132, 199, 0.32);
+        }
+
+        /* ── Scroll Reveal ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        /* ── FadeInUp ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-badge {
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .hero h1 {
+            animation: fadeInUp 0.6s ease 0.4s both;
+        }
+
+        .hero-subtitle {
+            animation: fadeInUp 0.6s ease 0.6s both;
+        }
+
+        .hero-actions {
+            animation: fadeInUp 0.6s ease 0.8s both;
+        }
+
+        .hero-stats {
+            animation: fadeInUp 0.6s ease 1s both;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ Particle Background ═══ -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- ═══ Navigation ═══ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/" class="active">Home</a></li>
+                <li><a href="/smart-discover">Smart Discover</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ═══ Hero ═══ -->
+    <section class="hero" id="hero">
+        <div class="hero-bg">
+            <div class="grid-pattern"></div>
+            <div class="glow-orb orb-1"></div>
+            <div class="glow-orb orb-2"></div>
+            <div class="glow-orb orb-3"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse"></span>
+                Smart Logistics Platform
+            </div>
+            <h1>
+                Ship Smarter with<br>
+                <span class="gradient-text-anim">Shared Cargo Space</span>
+            </h1>
+            <p class="hero-subtitle">
+                Connect with partially-filled shipments worldwide. Reduce costs by up to 60%,
+                cut carbon emissions, and ship your goods with confidence.
+            </p>
+            <div class="hero-actions">
+                <a href="/smart-discover" class="btn btn-primary btn-lg" id="cta-discover">
+                    🔍 Smart Discover
+                </a>
+                <a href="/smart-discover?mode=fuzzy" class="btn btn-secondary btn-lg" id="cta-recommend">
+                    🤖 Fuzzy Matching
+                </a>
+            </div>
+            <div class="hero-stats" id="heroStats">
+                <div class="hero-stat">
+                    <div class="stat-value" id="stat-shipments">0</div>
+                    <div class="stat-label">Active Shipments</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="stat-value" id="stat-cities">0</div>
+                    <div class="stat-label">Global Cities</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="stat-value" id="stat-modes">4</div>
+                    <div class="stat-label">Transport Modes</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="stat-value" id="stat-savings">~60%</div>
+                    <div class="stat-label">Cost Savings</div>
+                </div>
+            </div>
+            <div class="hero-float-badges">
+                <div class="float-badge"><span class="dot"></span> No Hidden Fees</div>
+                <div class="float-badge"><span class="dot"></span> 100% Open Source</div>
+                <div class="float-badge"><span class="dot"></span> AI-Powered</div>
+                <div class="float-badge"><span class="dot"></span> Carbon Neutral</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Transport Modes ═══ -->
+    <section class="section" id="transport-modes">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <div class="section-tag">✦ Multi-Modal Transport</div>
+                <h2>Four Ways to Ship Your Cargo</h2>
+                <p>Choose the transport mode that best fits your timeline, budget, and route.</p>
+            </div>
+            <div class="mode-showcase">
+                <div class="mode-card reveal reveal-delay-1">
+                    <span class="mode-emoji">✈️</span>
+                    <div class="mode-name">Air Freight</div>
+                    <div class="mode-desc">Fastest delivery • Premium rates • Global reach</div>
+                </div>
+                <div class="mode-card reveal reveal-delay-2">
+                    <span class="mode-emoji">🚢</span>
+                    <div class="mode-name">Sea Freight</div>
+                    <div class="mode-desc">Best value • High capacity • Ocean routes</div>
+                </div>
+                <div class="mode-card reveal reveal-delay-3">
+                    <span class="mode-emoji">🚛</span>
+                    <div class="mode-name">Road Transport</div>
+                    <div class="mode-desc">Door-to-door • Regional • Flexible timing</div>
+                </div>
+                <div class="mode-card reveal reveal-delay-4">
+                    <span class="mode-emoji">🚂</span>
+                    <div class="mode-name">Rail Freight</div>
+                    <div class="mode-desc">Eco-friendly • Continental • Reliable schedules</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Features ═══ -->
+    <section class="section" id="features">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <div class="section-tag">✦ Core Features</div>
+                <h2>Everything You Need to Ship Efficiently</h2>
+                <p>From intelligent matching to real-time tracking, a complete logistics solution.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card-enhanced reveal reveal-delay-1" onmousemove="moveGlow(event, this)">
+                    <div class="fc-icon"
+                        style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.03));">🔍
+                    </div>
+                    <h3>Smart Discovery</h3>
+                    <p>Browse thousands of shipments filtered by route, mode, cost, and capacity with auto-suggested
+                        cities.</p>
+                    <a href="/smart-discover" class="fc-link">Explore shipments →</a>
+                </div>
+                <div class="feature-card-enhanced reveal reveal-delay-2" onmousemove="moveGlow(event, this)">
+                    <div class="fc-icon"
+                        style="background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(236,72,153,0.03));">🤖
+                    </div>
+                    <h3>Fuzzy Logic AI</h3>
+                    <p>Our recommendation engine uses scikit-fuzzy to score shipments on fit, cost, and urgency — with
+                        explainability.</p>
+                    <a href="/smart-discover?mode=fuzzy" class="fc-link">Try Fuzzy Match →</a>
+                </div>
+                <div class="feature-card-enhanced reveal reveal-delay-3" onmousemove="moveGlow(event, this)">
+                    <div class="fc-icon"
+                        style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(6,182,212,0.03));">📡</div>
+                    <h3>Live Tracking</h3>
+                    <p>Visualize your cargo on 2D Leaflet maps with simulated real-time tracking and route progress.</p>
+                    <a href="/tracking" class="fc-link">Track a shipment →</a>
+                </div>
+                <div class="feature-card-enhanced reveal reveal-delay-2" onmousemove="moveGlow(event, this)">
+                    <div class="fc-icon"
+                        style="background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.03));">💰
+                    </div>
+                    <h3>Transparent Pricing</h3>
+                    <p>Upfront cost-per-kg pricing with instant total cost calculation. No hidden fees.</p>
+                    <a href="/smart-discover" class="fc-link">See pricing →</a>
+                </div>
+                <div class="feature-card-enhanced reveal reveal-delay-3" onmousemove="moveGlow(event, this)">
+                    <div class="fc-icon"
+                        style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03));">🌱
+                    </div>
+                    <h3>Sustainability</h3>
+                    <p>Track CO₂ savings, trucks avoided, and tree equivalents. Sharing space means greener logistics.
+                    </p>
+                    <a href="/dashboard" class="fc-link">View impact →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ How It Works ═══ -->
+    <section class="section" id="how-it-works">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <div class="section-tag">✦ How It Works</div>
+                <h2>Three Simple Steps</h2>
+                <p>Getting started with EaseCargo is fast and straightforward.</p>
+            </div>
+            <div class="hiw-timeline reveal">
+                <div class="hiw-step">
+                    <div class="hiw-number">1</div>
+                    <h3>Search & Filter</h3>
+                    <p>Enter your route, cargo weight, and preferred transport mode.</p>
+                </div>
+                <div class="hiw-step">
+                    <div class="hiw-number">2</div>
+                    <h3>Compare & Match</h3>
+                    <p>Review AI-scored recommendations with clear explanations.</p>
+                </div>
+                <div class="hiw-step">
+                    <div class="hiw-number">3</div>
+                    <h3>Book & Track</h3>
+                    <p>Confirm with one click and track on interactive maps.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Technology ═══ -->
+    <section class="section" id="tech-stack">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <div class="section-tag">✦ Technology</div>
+                <h2>Built with Modern Open-Source Tools</h2>
+                <p>100% free stack — no paid APIs, no cloud dependency.</p>
+            </div>
+            <div class="tech-orbit reveal">
+                <div class="orbit-ring">
+                    <div class="orbit-item" style="top: -25px; left: 50%; margin-left: -25px;" title="Flask">🐍</div>
+                    <div class="orbit-item" style="top: 50%; right: -25px; margin-top: -25px;" title="Leaflet">🗺️</div>
+                    <div class="orbit-item" style="bottom: -25px; left: 50%; margin-left: -25px;" title="Leaflet">🗺️
+                    </div>
+                    <div class="orbit-item" style="top: 50%; left: -25px; margin-top: -25px;" title="SQLite">🗄️</div>
+                    <div class="orbit-item" style="top: 12%; right: 8%;" title="scikit-fuzzy">🤖</div>
+                    <div class="orbit-item" style="bottom: 12%; left: 8%;" title="Pandas">📊</div>
+                </div>
+                <div class="tech-center" title="EaseCargo">📦</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ CTA ═══ -->
+    <section class="cta-section-enhanced" id="cta-section">
+        <div class="cta-card reveal">
+            <h2>Ready to Ship <span class="gradient-text-anim">Smarter</span>?</h2>
+            <p>Join thousands of exporters saving costs and reducing their carbon footprint with shared cargo space.</p>
+            <div class="hero-actions">
+                <a href="/smart-discover" class="btn btn-primary btn-lg">🚀 Start Exploring</a>
+                <a href="/tracking" class="btn btn-secondary btn-lg cta-track-btn">📡 Track Shipments</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo">📦 EaseCargo</div>
+                <p>Smart Container Space Matching Platform — connecting exporters with unused cargo capacity worldwide.
+                </p>
+            </div>
+            <div class="footer-col">
+                <h4>Platform</h4>
+                <ul>
+                    <li><a href="/smart-discover">Smart Discover</a></li>
+                    <li><a href="/smart-discover?mode=fuzzy">Fuzzy Matching</a></li>
+                    <li><a href="/tracking">Tracking</a></li>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/about#architecture">Architecture</a></li>
+                    <li><a href="/about#api">API Docs</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Tech Stack</h4>
+                <ul>
+                    <li><a href="#">Flask + Python</a></li>
+                    <li><a href="#">SQLite + SQLAlchemy</a></li>
+                    <li><a href="#">Leaflet Maps</a></li>
+                    <li><a href="#">Fuzzy Logic AI</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Academic Research Project. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        // ═══ PARTICLE BACKGROUND (BRIGHT) ═══
+        (function () {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let w, h;
+            const colors = ['rgba(99,102,241,', 'rgba(236,72,153,', 'rgba(20,184,166,', 'rgba(245,158,11,'];
+
+            function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+            resize();
+            window.addEventListener('resize', resize);
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.vx = (Math.random() - 0.5) * 0.25;
+                    this.vy = (Math.random() - 0.5) * 0.25;
+                    this.radius = Math.random() * 2 + 0.8;
+                    this.opacity = Math.random() * 0.25 + 0.08;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                }
+            }
+
+            for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > w) p.vx *= -1;
+                    if (p.y < 0 || p.y > h) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + p.opacity + ')';
+                    ctx.fill();
+
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x, dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 140) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(99, 102, 241, ${0.04 * (1 - dist / 140)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+
+        // ═══ SCROLL REVEAL ═══
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // ═══ COUNTERS ═══
+        function animateCounter(id, target, suffix = '') {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const duration = 2000, start = performance.now();
+            function update(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(ease * target).toLocaleString() + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        // ═══ GLOW FOLLOW ═══
+        function moveGlow(e, el) {
+            const rect = el.getBoundingClientRect();
+            el.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+            el.style.setProperty('--my', `${e.clientY - rect.top}px`);
+        }
+
+        // ═══ INIT ═══
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/shipments/stats')
+                .then(r => r.json())
+                .then(data => { animateCounter('stat-shipments', data.total_shipments || 10000, '+'); })
+                .catch(() => { animateCounter('stat-shipments', 10000, '+'); });
+
+            fetch('/api/cities')
+                .then(r => r.json())
+                .then(data => {
+                    animateCounter('stat-cities', data.count || 50, '+');
+                })
+                .catch(() => { animateCounter('stat-cities', 50, '+'); });
+        });
+    </script>
+</body>
+
+</html>

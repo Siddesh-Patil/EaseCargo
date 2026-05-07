@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Smart Discover combines standard shipment search with urgency-based fuzzy matching for better cargo fit.">
+    <title>Smart Discover — EaseCargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="logo-icon">📦</div>
+                <span>Ease<span class="logo-text-accent">Cargo</span></span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/smart-discover" class="active">Smart Discover</a></li>
+                <li><a href="/tracking">Tracking</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <h1>🧠 Smart <span class="gradient-text"
+                    style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Discover</span>
+            </h1>
+            <p>Use standard shipment search or switch to urgency-based fuzzy matching on the same screen.</p>
+        </div>
+
+        <div class="page-content">
+            <div class="filter-panel" id="filterPanel">
+                <h3>🎯 Search & Match Shipments</h3>
+                <div class="form-row">
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Source City *</label>
+                        <input type="text" class="form-input" id="filterSource" placeholder="e.g. Mumbai">
+                        <div class="autocomplete-list" id="sourceAutocomplete"></div>
+                    </div>
+                    <div class="form-group autocomplete-wrapper">
+                        <label class="form-label">Destination City *</label>
+                        <input type="text" class="form-input" id="filterDest" placeholder="e.g. London">
+                        <div class="autocomplete-list" id="destAutocomplete"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Matching Mode</label>
+                        <select class="form-select" id="matchingMode" onchange="onMatchingModeChange()">
+                            <option value="standard" selected>Standard Shipment Matching</option>
+                            <option value="fuzzy">Fuzzy Logic Matching</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Transport Mode</label>
+                        <select class="form-select" id="filterMode">
+                            <option value="">All Modes</option>
+                            <option value="Air">✈️ Air</option>
+                            <option value="Sea">🚢 Sea</option>
+                            <option value="Road">🚛 Road</option>
+                            <option value="Rail">🚂 Rail</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cargo Weight (kg)</label>
+                        <input type="number" class="form-input" id="cargoWeight" placeholder="e.g. 500" min="1">
+                    </div>
+
+                    <div class="form-group" id="standardOnlyMinCap">
+                        <label class="form-label">Min Capacity (kg)</label>
+                        <input type="number" class="form-input" id="filterMinCap" placeholder="e.g. 100">
+                    </div>
+                </div>
+
+                <div class="form-row" id="standardOnlyRow">
+                    <div class="form-group">
+                        <label class="form-label">Max Cost ($/kg)</label>
+                        <input type="number" class="form-input" id="filterMaxCost" placeholder="e.g. 5.00" step="0.1">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" id="searchBtn" onclick="runSearch()" style="width: 100%;">
+                            🔍 Search Shipments
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-row" id="fuzzyOnlyRow" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Urgency Level</label>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                            <input type="range" id="matchUrgency" min="0" max="100" value="50"
+                                style="flex: 1; accent-color: var(--accent-400);"
+                                oninput="document.getElementById('urgencyLabel').textContent = getUrgencyLabel(this.value)">
+                            <span id="urgencyLabel"
+                                style="font-size: 0.85rem; color: var(--accent-400); min-width: 70px;">Medium</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" id="fuzzyBtn" onclick="runSearch()" style="width: 100%;">
+                            🤖 Get Smart Matches
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem; border-left: 3px solid var(--accent-400); display: none;"
+                id="fuzzyExplainer">
+                <h3 style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+                    🧠 How Fuzzy Matching Works
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7;">
+                    Fuzzy logic combines Capacity Fit, Cost Efficiency, and Urgency to score each shipment on a scale of 0-100.
+                    This helps prioritize better options when your timelines are strict.
+                </p>
+            </div>
+
+            <div class="results-header" id="resultsHeader" style="display: none;">
+                <div class="results-count" id="resultsCount"></div>
+                <div>
+                    <button class="btn btn-ghost btn-sm" onclick="runSearch()">↻ Refresh</button>
+                </div>
+            </div>
+
+            <div id="suggestions" style="display: none; margin-bottom: 1.5rem;"></div>
+
+            <div class="loading-spinner" id="loadingState" style="display: none;">
+                <div class="spinner"></div>
+                <span style="color: var(--text-muted);" id="loadingText">Searching shipments...</span>
+            </div>
+
+            <div class="results-grid" id="resultsGrid"></div>
+
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">🔎</div>
+                <h3>Start with Smart Discover</h3>
+                <p>Search by route and choose between Standard matching or Fuzzy Logic matching with urgency.</p>
+            </div>
+
+            <div class="pagination" id="pagination" style="display: none;"></div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>© 2025 EaseCargo — Smart Container Space Matching Platform</p>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+        const perPage = 12;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAutocomplete('filterSource', 'sourceAutocomplete');
+            setupAutocomplete('filterDest', 'destAutocomplete');
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'fuzzy') {
+                document.getElementById('matchingMode').value = 'fuzzy';
+            }
+
+            onMatchingModeChange();
+
+            document.querySelectorAll('.form-input, .form-select').forEach(el => {
+                el.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') runSearch();
+                });
+            });
+
+            runSearch();
+        });
+
+        function getUrgencyLabel(val) {
+            if (val >= 80) return 'Very High';
+            if (val >= 60) return 'High';
+            if (val >= 40) return 'Medium';
+            if (val >= 20) return 'Low';
+            return 'Very Low';
+        }
+
+        function onMatchingModeChange() {
+            const mode = document.getElementById('matchingMode').value;
+            const standardOnlyRow = document.getElementById('standardOnlyRow');
+            const standardOnlyMinCap = document.getElementById('standardOnlyMinCap');
+            const fuzzyOnlyRow = document.getElementById('fuzzyOnlyRow');
+            const fuzzyExplainer = document.getElementById('fuzzyExplainer');
+            const loadingText = document.getElementById('loadingText');
+
+            if (mode === 'fuzzy') {
+                standardOnlyRow.style.display = 'none';
+                standardOnlyMinCap.style.display = 'none';
+                fuzzyOnlyRow.style.display = 'flex';
+                fuzzyExplainer.style.display = 'block';
+                loadingText.textContent = 'Running fuzzy logic engine...';
+            } else {
+                standardOnlyRow.style.display = 'flex';
+                standardOnlyMinCap.style.display = 'block';
+                fuzzyOnlyRow.style.display = 'none';
+                fuzzyExplainer.style.display = 'none';
+                loadingText.textContent = 'Searching shipments...';
+            }
+        }
+
+        function runSearch(page = 1) {
+            const mode = document.getElementById('matchingMode').value;
+            if (mode === 'fuzzy') {
+                getRecommendations();
+            } else {
+                searchStandardShipments(page);
+            }
+        }
+
+        async function searchStandardShipments(page = 1) {
+            currentPage = page;
+            const source = document.getElementById('filterSource').value.trim();
+            const dest = document.getElementById('filterDest').value.trim();
+            const mode = document.getElementById('filterMode').value;
+            const minCap = document.getElementById('filterMinCap').value;
+            const maxCost = document.getElementById('filterMaxCost').value;
+            const weight = document.getElementById('cargoWeight').value;
+
+            document.getElementById('loadingState').style.display = 'flex';
+            document.getElementById('resultsGrid').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('pagination').style.display = 'none';
+            document.getElementById('resultsHeader').style.display = 'none';
+
+            const effectiveMinCap = minCap || weight;
+
+            let params = new URLSearchParams({ page, per_page: perPage });
+            if (source) params.append('source', source);
+            if (dest) params.append('destination', dest);
+            if (mode) params.append('mode', mode);
+            if (effectiveMinCap) params.append('min_capacity', effectiveMinCap);
+            if (maxCost) params.append('max_cost', maxCost);
+
+            try {
+                const data = await apiRequest(`/shipments?${params.toString()}`);
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (data.shipments.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('emptyState').innerHTML = `
+                        <div class="empty-icon">📭</div>
+                        <h3>No Shipments Found</h3>
+                        <p>Try adjusting your filters or switch to Fuzzy Logic mode for urgency-based ranking.</p>
+                    `;
+                    if (data.suggestions) {
+                        showSuggestions(data.suggestions);
+                    }
+                    return;
+                }
+
+                document.getElementById('resultsHeader').style.display = 'flex';
+                document.getElementById('resultsCount').innerHTML = `
+                    Showing <strong>${data.shipments.length}</strong> of <strong>${data.total.toLocaleString()}</strong> shipments
+                    (Page ${data.page} of ${data.pages})
+                `;
+
+                document.getElementById('resultsGrid').innerHTML = data.shipments.map(s => createShipmentCard(s)).join('');
+                renderPagination(data.page, data.pages);
+            } catch (err) {
+                document.getElementById('loadingState').style.display = 'none';
+                showToast('Failed to load shipments: ' + err.message, 'error');
+            }
+        }
+
+        async function getRecommendations() {
+            const source = document.getElementById('filterSource').value.trim();
+            const dest = document.getElementById('filterDest').value.trim();
+            const weight = parseFloat(document.getElementById('cargoWeight').value);
+            const mode = document.getElementById('filterMode').value;
+            const urgency = parseInt(document.getElementById('matchUrgency').value, 10);
+
+            if (!source || !dest || !weight) {
+                showToast('Please fill in source, destination, and cargo weight for fuzzy matching', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('fuzzyBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Analyzing...';
+
+            document.getElementById('loadingState').style.display = 'flex';
+            document.getElementById('resultsGrid').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('pagination').style.display = 'none';
+            document.getElementById('resultsHeader').style.display = 'none';
+
+            try {
+                const data = await apiRequest('/recommend', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        source,
+                        destination: dest,
+                        weight_kg: weight,
+                        transport_mode: mode,
+                        urgency,
+                    }),
+                });
+
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (!data.recommendations || data.recommendations.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('emptyState').innerHTML = `
+                        <div class="empty-icon">🔍</div>
+                        <h3>No Matches Found</h3>
+                        <p>${data.message || 'Try different cities, transport mode, weight, or urgency.'}</p>
+                    `;
+                    return;
+                }
+
+                document.getElementById('resultsHeader').style.display = 'flex';
+                document.getElementById('resultsCount').innerHTML = `
+                    <strong>🎯 ${data.recommendations.length} Smart Matches</strong>
+                    <span style="color: var(--text-muted);"> from ${data.total_candidates} candidates</span>
+                    <span style="color: var(--text-muted);"> • Urgency: ${getUrgencyLabel(urgency)}</span>
+                `;
+
+                document.getElementById('resultsGrid').innerHTML = data.recommendations.map(s => createShipmentCard(s, true, true)).join('');
+            } catch (err) {
+                document.getElementById('loadingState').style.display = 'none';
+                showToast('Recommendation failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🤖 Get Smart Matches';
+            }
+        }
+
+        function showSuggestions(suggestions) {
+            const container = document.getElementById('suggestions');
+            let html = '<div class="card" style="padding: 1.5rem;">';
+            html += '<h3 style="margin-bottom: 0.5rem;">💡 Did you mean?</h3>';
+
+            if (suggestions.source_alternatives) {
+                html += '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Source cities:</p>';
+                html += '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">';
+                suggestions.source_alternatives.forEach(city => {
+                    html += `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('filterSource').value='${city}'; runSearch();">${city}</button>`;
+                });
+                html += '</div>';
+            }
+
+            if (suggestions.destination_alternatives) {
+                html += '<p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Destination cities:</p>';
+                html += '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">';
+                suggestions.destination_alternatives.forEach(city => {
+                    html += `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('filterDest').value='${city}'; runSearch();">${city}</button>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        function renderPagination(current, total) {
+            const container = document.getElementById('pagination');
+            if (total <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'flex';
+            let html = '';
+
+            html += `<button ${current <= 1 ? 'disabled' : ''} onclick="searchStandardShipments(${current - 1})">← Prev</button>`;
+
+            const start = Math.max(1, current - 2);
+            const end = Math.min(total, current + 2);
+
+            if (start > 1) {
+                html += `<button onclick="searchStandardShipments(1)">1</button>`;
+                if (start > 2) html += `<span class="page-info">...</span>`;
+            }
+
+            for (let i = start; i <= end; i++) {
+                html += `<button class="${i === current ? 'active' : ''}" onclick="searchStandardShipments(${i})">${i}</button>`;
+            }
+
+            if (end < total) {
+                if (end < total - 1) html += `<span class="page-info">...</span>`;
+                html += `<button onclick="searchStandardShipments(${total})">${total}</button>`;
+            }
+
+            html += `<button ${current >= total ? 'disabled' : ''} onclick="searchStandardShipments(${current + 1})">Next →</button>`;
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>
