@@ -1,26 +1,32 @@
 FROM python:3.10-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# Install system dependencies needed for scientific packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    gfortran \
+    libopenblas-dev \
+    libblas-dev \
+    liblapack-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Upgrade pip and install requirements
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN useradd --create-home --shell /usr/sbin/nologin easecargo \
-    && mkdir -p /app/instance \
-    && chown -R easecargo:eascargo /app
+# Copy application code
+COPY . /app
 
-USER easecargo
+ENV PYTHONUNBUFFERED=1
 
-EXPOSE 5000
+# Expose port (app uses 8000 by default via gunicorn)
+EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "wsgi:app"]
+# Use gunicorn to serve the Flask app defined in wsgi.py
+CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:8000", "wsgi:app"]

@@ -1,18 +1,14 @@
-services:
-  easecargo:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: easecargo:latest
-    container_name: easecargo
-    ports:
-      - "5000:5000"
-    environment:
-      FLASK_ENV: production
-      DATABASE_URL: sqlite:////app/instance/easecargo.db
-    volumes:
-      - easecargo_instance:/app/instance
-    restart: unless-stopped
+version: "3.8"
 
-volumes:
-  easecargo_instance:
+services:
+  web:
+    build: .
+    image: easecargo-web:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+    volumes:
+      - ./:/app:ro
+      - ./instance:/app/instance
+    restart: unless-stopped
